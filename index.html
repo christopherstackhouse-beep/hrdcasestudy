@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HRD Assessment Case: Shannon's Restaurant (Part 1)</title>
+  <style>
+    :root { --bg:#0b0f14; --panel:#121821; --muted:#9fb3c8; --text:#e6eef6; --accent:#57b3ff; --good:#39d98a; --bad:#ff6b6b; --warn:#ffd166; --shadow:rgba(0,0,0,.35); }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#0b0f14,#111723);color:var(--text);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+    .app{display:grid;grid-template-columns:300px 1fr;grid-template-rows:auto 1fr;min-height:100vh}
+    header{grid-column:1/-1;padding:14px 18px;background:rgba(255,255,255,.02);backdrop-filter:blur(4px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;gap:16px;align-items:center}
+    header h1{font-size:18px;margin:0;font-weight:650;letter-spacing:.2px}
+    .badge{font-size:12px;padding:2px 8px;border-radius:999px;background:#1a2330;color:var(--muted);border:1px solid rgba(255,255,255,.06)}
+    .progress{flex:1;height:12px;background:#0f141d;border-radius:999px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.06)}
+    .progress>span{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,var(--accent),#6cf,#9df);box-shadow:0 0 16px #3af inset;transition:width .35s ease}
+    .progress-label{font-size:12px;color:var(--muted);padding-left:8px;min-width:58px;text-align:right}
+
+    aside{grid-row:2;grid-column:1;background:var(--panel);border-right:1px solid rgba(255,255,255,.06);padding:14px 10px}
+    .section-title{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin:16px 8px 6px}
+    .nav{display:grid;gap:6px;padding:6px}
+    .nav button{width:100%;text-align:left;border:1px solid rgba(255,255,255,.06);background:#0f141d;color:var(--text);padding:10px 12px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px var(--shadow)}
+    .nav button[aria-current="page"]{outline:2px solid var(--accent);background:#112033}
+    .pill{margin-left:auto;font-size:11px;color:#a8c4dd;background:#0d1320;border:1px solid rgba(255,255,255,.06);padding:2px 6px;border-radius:999px}
+
+    main{grid-row:2;grid-column:2;padding:18px;display:flex;justify-content:center;align-items:flex-start;overflow:hidden}
+    .stageWrap{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .stageSizer{position:relative;width:1536px;height:1024px}
+    .stage{position:absolute;left:0;top:0;width:1536px;height:1024px;background:#000 center/cover no-repeat;border:1px solid rgba(255,255,255,.08);border-radius:16px;box-shadow:0 10px 30px var(--shadow);transform-origin:top left;z-index:1}
+
+    /* Map icons */
+    .sprite{position:absolute;display:block;width:216px;height:216px;object-fit:contain;cursor:pointer;box-shadow:none;background:transparent;border:none;border-radius:0;filter:none;z-index:5;transition:transform .18s ease;transform-origin:center center;transform:scale(calc(var(--baseScale,1) * var(--hoverScale,1)))}
+    .sprite.badge{width:192px;height:192px}
+    .sprite:hover{--hoverScale:1.1;z-index:6}
+
+    /* Overlay */
+    .overlay{position:absolute;max-width:760px;min-width:640px;background:rgba(17,23,35,.96);border:1px solid rgba(255,255,255,.1);border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.5);display:grid;grid-template-columns:220px 1fr;gap:14px;padding:14px;transform:scale(var(--overlay-scale,1));transform-origin:top left;z-index:20}
+    .overlay .portrait{width:100%;height:260px;object-fit:cover;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:#0b0f14}
+    .overlay .portrait.npc-bg{background:#e5b451}
+    .overlay .portrait.plain{width:auto!important;height:auto!important;max-width:100%;max-height:260px;object-fit:contain!important;background:#e5b451!important}
+    .overlay .close{position:absolute;right:10px;top:8px;border:none;background:transparent;color:var(--muted);font-size:22px;cursor:pointer}
+    .overlay .content{max-height:420px;overflow:auto}
+
+    .card{background:var(--panel);border:1px solid rgba(255,255,255,.06);border-radius:16px;box-shadow:0 8px 24px var(--shadow)}
+    .card .inner{padding:16px}
+    .row{display:grid;gap:16px}
+    @media(min-width:860px){ .row.cols-2{grid-template-columns:1fr 1fr} }
+    .avatar{width:28px;height:28px;border-radius:999px;display:inline-grid;place-items:center;font-weight:700}
+    .npc-Shannon{background:#2a2d59} .npc-Carlos{background:#354f52} .npc-Maya{background:#7b2cbf} .npc-Jess{background:#324b7a} .npc-Avery{background:#5f0f40} .npc-Liam{background:#234}
+    .dialogue{display:grid;gap:12px}
+    .bubble{padding:12px;border-radius:14px;max-width:900px}
+    .from-npc{background:#101827;border:1px solid rgba(255,255,255,.06)}
+    .from-player{background:#0f1a23;border:1px dashed rgba(255,255,255,.14)}
+    .choices{display:grid;gap:8px}
+    .choices button{border:1px solid rgba(255,255,255,.06);background:#0e1520;color:var(--text);padding:10px 12px;border-radius:12px;cursor:pointer;text-align:left}
+    .review{border-left:4px solid #1f2a3a;padding-left:12px;margin:0 0 10px 0}
+    .stars{letter-spacing:2px}
+    .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+    .metric{background:#0f141d;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:10px}
+    .metric h4{margin:0 0 4px 0;font-size:13px;color:var(--muted)}
+    .metric .val{font-weight:700;font-size:22px}
+    .ranker{display:grid;gap:16px}
+    .issues, .top3{display:grid;gap:8px;min-height:120px}
+    .issues .item, .top3 .slot{border:1px dashed rgba(255,255,255,.18);background:#0d1420;border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center}
+    .item[draggable="true"]{cursor:grab}
+    .slot{min-height:52px}
+    .slot.filled{border-style:solid}
+    .hint{font-size:12px;color:var(--muted)}
+    .drop-ok{outline:2px solid var(--accent)}
+    .drop-bad{outline:2px solid var(--bad)}
+    .correct{background:rgba(57,217,138,.06);border-color:var(--good)}
+    .incorrect{background:rgba(255,107,107,.06);border-color:var(--bad)}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+    .btn{border:1px solid rgba(255,255,255,.08);background:#0e1623;color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer}
+    .btn.primary{background:#133250;border-color:#1e4467}
+    .btn.warn{background:#2b1d00;border-color:#503a00}
+    .btn.ghost{background:transparent}
+    .subtle{color:var(--muted);font-size:13px}
+    .code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#0b0f14;border:1px solid rgba(255,255,255,.08);padding:8px;border-radius:8px;white-space:pre-wrap}
+    footer{grid-column:1/-1;color:var(--muted);font-size:12px;text-align:center;padding:10px}
+
+    /* Labels under badges */
+    .sprite-label{position:absolute;color:#e0d7bd;font:700 18px/1 "Trebuchet MS","Comic Sans MS","Segoe UI",Arial,sans-serif;text-align:center;transform-origin:center top;transition:transform .18s ease;pointer-events:none;z-index:5}
+    .sprite:hover + .sprite-label{transform:scale(1.1);z-index:7}
+  </style>
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <h1>HRD Assessment: Shannon's Restaurant</h1>
+    <span class="badge" id="saveState">Auto‑saved</span>
+    <div class="progress" aria-label="Progress"><span id="progressFill" style="width:0%"></span></div>
+    <div class="progress-label" id="progressPct">0%</div>
+  </header>
+  <aside>
+    <div class="section-title">Explore</div>
+    <nav class="nav" id="nav"></nav>
+    <div class="section-title">Actions</div>
+    <div class="nav">
+      <button id="openSaveLoad"><span class="avatar">💾</span> Save / Load</button>
+      <button id="ambienceToggle"><span class="avatar">🔊</span> Ambience: Off</button>
+      <button id="resetBtn" class="btn warn">Reset Progress</button>
+      <button id="forceResetBtn" class="btn warn">Reset & Reload</button>
+    </div>
+  </aside>
+  <main id="main">
+    <div class="stageWrap" id="stageWrap">
+      <div class="stageSizer" id="stageSizer">
+        <div class="stage" id="stage"></div>
+      </div>
+    </div>
+  </main>
+  <footer>Part 1 • Assessment → Data Gathering & Issue Prioritization • Built for Brightspace (client‑side only)</footer>
+</div>
+<script>
+(function(){
+  const CONFIG = {
+    version: '1.2.4-fixed-bg',
+    key: 'hrd_assessment_game_v2',
+    assets: {
+      bg: 'restaurant_bg.jpg',
+      portraits: { Shannon:'shannon.png', Carlos:'carlos.png', Maya:'maya.png', Jess:'jess.png', Avery:'avery.png', Liam:'liam.png' },
+      icons: { reviews:'phone.png', metrics:'folder.png' },
+      audio: { ambience: 'background.wav', music:'intro_music.wav' }
+    },
+    sprites: [
+      { id:'Shannon', x:820, y:260, kind:'npc' },
+      { id:'Carlos',  x:210, y:340, kind:'npc' },
+      { id:'Maya',    x:535, y:500, kind:'npc' },
+      { id:'Jess',    x:1020, y:645, kind:'npc' },
+      { id:'Avery',   x:225, y:695, kind:'npc' },
+      { id:'Liam',    x:1160, y:260, kind:'npc' },
+      { id:'reviews', x:1360, y:870, kind:'reviews' },
+      { id:'metrics', x:1185, y:870, kind:'metrics' }
+    ],
+    issues: [
+      { id:'understaffing', title:'Chronic understaffing at peak hours (FOH/BOH below target)', hint:'Targets: 16 BOH vs 10 current; 30 FOH vs 20 current.' },
+      { id:'turnover', title:'High turnover in FOH roles, driving constant backfilling', hint:'45–55% FOH turnover reported; 30–40% BOH.' },
+      { id:'training', title:'Inconsistent onboarding & training; unclear service & kitchen SOPs', hint:'New hires learn “on the fly”; few standards documented.' },
+      { id:'scheduling', title:'Unstable schedules and last‑minute changes', hint:'Schedule posted late; frequent swaps & overtime.' },
+      { id:'cross_training', title:'Limited cross‑training across roles', hint:'Few backups on grill, expo, or host stand.' },
+      { id:'communication', title:'Weak pre‑shift communication & FOH/BOH handoffs', hint:'No daily huddle; expo guidance variable.' },
+      { id:'performance_mgmt', title:'Sparse coaching/feedback cadence', hint:'Little structured feedback beyond corrective notes.' },
+      { id:'comp_benefits', title:'Compensation/benefits not competitive locally', hint:'Staff cite higher pay at competitors.' },
+      { id:'culture', title:'FOH–BOH friction & stress; morale dips at rush', hint:'Tension during long waits & ticket backups.' },
+      { id:'mgr_load', title:'Managers overloaded with admin; less time on floor‑coaching', hint:'Payroll/inventory consume prime hours.' },
+    ],
+    correctTop3: ['understaffing','turnover','training'],
+    npcs: [
+      { id:'Shannon', role:'Operating Partner', color:'npc-Shannon',
+        intro:"Welcome in. I’m Shannon — thanks for helping us look under the hood.",
+        qa:[
+          { q:'What are your current staffing levels vs your targets?', a:'Back‑of‑house: 10 on roster; target is 16. Front‑of‑house: 20 on roster; target is 30.' },
+          { q:'Financially, how is the restaurant performing?', a:'About $4M in annual revenue at ~16% profit margin. We are profitable, but I’m convinced we’re leaving money on the table due to staffing issues.' },
+          { q:'Where do staffing constraints hurt the guest experience most?', a:'Peaks. Wait times jump, table turns slow, and we sometimes cap reservations because the floor or line can’t keep up.' },
+          { q:'What have you tried so far?', a:'Recruiting pushes, some sign‑on bonuses, ad hoc training, and asking leaders to pitch in on the floor when we’re slammed.' },
+        ] },
+      { id:'Carlos', role:'Sous Chef', color:'npc-Carlos',
+        intro:'I run PM line most nights. Happy to share what I see.',
+        qa:[
+          { q:'Where are the bottlenecks on the line?', a:'Grill and sauté back up when we’re short. Expo gets chaotic without a clear point person.' },
+          { q:'How are new cooks trained?', a:'Mostly shadow shifts. No real checklist. Some pick it up fast; others are lost for a week.' },
+          { q:'Do you get schedule stability?', a:'Not really. We swap a lot and use overtime to plug holes.' },
+        ] },
+      { id:'Maya', role:'Line Cook', color:'npc-Maya',
+        intro:'I’m on sauté three nights, pantry two.',
+        qa:[
+          { q:'How long did it take to feel confident?', a:'About a month. Would’ve been faster with a station guide and photos.' },
+          { q:'Any cross‑training?', a:'I’d like more. If grill calls out, tickets stack up.' },
+        ] },
+      { id:'Jess', role:'Server', color:'npc-Jess',
+        intro:'I’ve served here for a year.',
+        qa:[
+          { q:'Where do guests feel pain?', a:'Longer waits and slower drink refills when we’re short on floor staff.' },
+          { q:'Pre‑shift communication?', a:'Depends on who’s leading. Some nights we skip it.' },
+          { q:'Turnover?', a:'We lose people to places that offer steadier schedules or a buck more an hour.' },
+        ] },
+      { id:'Avery', role:'Host', color:'npc-Avery',
+        intro:'I’m usually on the door Friday–Sunday.',
+        qa:[
+          { q:'Reservations & quotes?', a:'I sometimes pad quotes because I know the line is buried. We cap walk‑ins more than we should.' },
+          { q:'Training?', a:'I learned the book by shadowing. No reference guide for table pacing or large‑party flow.' },
+        ] },
+      { id:'Liam', role:'Bartender', color:'npc-Liam',
+        intro:'Bar and service well are my world.',
+        qa:[
+          { q:'Where does service lag?', a:'When I’m solo in the well and the bar is full, ticket times slip.' },
+          { q:'Any SOPs?', a:'We have recipes, but no formal speed‑well setup guide posted.' },
+        ] }
+    ],
+    reviews:[
+      { stars:3, text:'Great food, but we waited 40 minutes past our reservation. Drinks took a while.' },
+      { stars:5, text:'When it’s not slammed, this place is flawless. Our server was fantastic.' },
+      { stars:2, text:'Bar was understaffed. Cocktails were slow and the host seemed overwhelmed.' },
+      { stars:4, text:'Steak was perfect. Timing between courses felt a bit off.' },
+      { stars:3, text:'We saw empty tables but were told the kitchen was backed up.' }
+    ],
+    metrics:[
+      { k:'Staffing (Current vs Target, BOH)', v:'10 / 16' },
+      { k:'Staffing (Current vs Target, FOH)', v:'20 / 30' },
+      { k:'Annual Revenue', v:'$4,000,000' },
+      { k:'Profit Margin', v:'16%' },
+      { k:'Annual Turnover (FOH)', v:'~52%' },
+      { k:'Annual Turnover (BOH)', v:'~38%' },
+      { k:'New‑Hire 30‑Day Retention', v:'~70%' },
+      { k:'Avg Time‑to‑Fill (days)', v:'28' },
+      { k:'Training Completion (FOH/BOH)', v:'55% / 40%' },
+      { k:'Weekly OT Hours (est.)', v:'18–24' },
+    ]
+  };
+
+  // ===== Placeholders (must be defined early) =====
+  const PLACEHOLDERS = {
+    phone: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 72 72"><rect rx="12" ry="12" width="72" height="72" fill="%23142133"/><rect x="22" y="12" width="28" height="48" rx="6" ry="6" fill="%239fb3c8"/><circle cx="36" cy="54" r="3" fill="%23142133"/></svg>',
+    folder: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 72 72"><rect rx="12" ry="12" width="72" height="72" fill="%23142133"/><path d="M14 26h18l4 6h22v22H14z" fill="%239fb3c8"/></svg>',
+    person: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="216" height="216" viewBox="0 0 72 72"><rect rx="36" ry="36" width="72" height="72" fill="%23142133"/><circle cx="36" cy="28" r="12" fill="%239fb3c8"/><rect x="18" y="44" width="36" height="16" rx="8" fill="%239fb3c8"/></svg>'
+  };
+
+  // ===== Audio (ambience + music) =====
+  var __ambAudio = null, __musicAudio = null;
+  var __audioPref = (function(){
+    try {
+      var v = JSON.parse(localStorage.getItem(CONFIG.key + '_audio')) || {};
+      var amb = (typeof v.volAmb === 'number') ? v.volAmb : 0.35;
+      var mus = (typeof v.volMusic === 'number') ? v.volMusic : 0.15; // softer by default
+      mus = Math.min(mus, Math.max(0, Math.min(1, amb * 0.7))); // keep music ≤ 70% ambience
+      return { enabled: v.enabled !== false, volAmb: amb, volMusic: mus };
+    } catch(e){ return { enabled:true, volAmb:0.35, volMusic:0.15 }; }
+  })();
+  function saveAudioPref(){ try { localStorage.setItem(CONFIG.key + '_audio', JSON.stringify(__audioPref)); } catch(e){} }
+  function clamp01(x){ x = +x; if(!isFinite(x)) return 0; return Math.max(0, Math.min(1, x)); }
+  function getAmbienceUrl(){ return (CONFIG.assets.audio && CONFIG.assets.audio.ambience) || 'background.wav'; }
+  function getMusicUrl(){ return (CONFIG.assets.audio && CONFIG.assets.audio.music) || 'intro_music.wav'; }
+  function initAudio(){
+    try{
+      if(!__ambAudio){
+        __ambAudio = new Audio();
+        __ambAudio.src = getAmbienceUrl();
+        __ambAudio.loop = true; __ambAudio.preload = 'auto';
+        __ambAudio.volume = clamp01(__audioPref.volAmb);
+        __ambAudio.addEventListener('error', function(){ setAmbienceLabel('Unavailable'); });
+      }
+      if(!__musicAudio){
+        __musicAudio = new Audio();
+        __musicAudio.src = getMusicUrl();
+        __musicAudio.loop = true; __musicAudio.preload = 'auto';
+        __musicAudio.volume = clamp01(Math.min(__audioPref.volMusic, (__audioPref.volAmb||0) * 0.7));
+      }
+      // Re-apply 70% cap if prefs changed
+      var cap = clamp01((__ambAudio ? __ambAudio.volume : (__audioPref.volAmb||0)) * 0.7);
+      if(__musicAudio && __musicAudio.volume > cap){ __musicAudio.volume = cap; __audioPref.volMusic = cap; saveAudioPref(); }
+
+      setAmbienceLabel(__audioPref.enabled ? 'On' : 'Off');
+      if(__audioPref.enabled){ __ambAudio && __ambAudio.play().catch(function(){}); __musicAudio && __musicAudio.play().catch(function(){}); }
+    }catch(e){ setAmbienceLabel('Unavailable'); }
+  }
+  function setAmbienceLabel(txt){ var b = document.getElementById('ambienceToggle'); if(b){ b.innerHTML = '<span class="avatar">🔊</span> Ambience: ' + txt; } }
+  function toggleAmbience(){
+    if(!__ambAudio || !__musicAudio) initAudio();
+    if(__audioPref.enabled){ try{ __ambAudio && __ambAudio.pause(); }catch(e){} try{ __musicAudio && __musicAudio.pause(); }catch(e){} __audioPref.enabled=false; setAmbienceLabel('Off'); }
+    else { __audioPref.enabled=true; setAmbienceLabel('On'); try{ __ambAudio && __ambAudio.play(); }catch(e){} try{ __musicAudio && __musicAudio.play(); }catch(e){} }
+    saveAudioPref();
+  }
+
+  // ===== Evidence Engine =====
+  const TAGS = {
+    npc: {
+      Shannon: { 0:['understaffing'], 1:['understaffing'], 2:['understaffing'], 3:['training','turnover'] },
+      Carlos:  { 0:['understaffing','communication'], 1:['training'], 2:['scheduling','understaffing'] },
+      Maya:    { 0:['training'], 1:['cross_training'] },
+      Jess:    { 0:['understaffing'], 1:['communication'], 2:['turnover','comp_benefits','scheduling'] },
+      Avery:   { 0:['understaffing'], 1:['training'] },
+      Liam:    { 0:['understaffing'], 1:['training'] },
+    },
+    reviews: { 0:['understaffing'], 1:['understaffing'], 2:['understaffing'], 3:['communication'], 4:['understaffing'] },
+    metrics: { 0:['understaffing'], 1:['understaffing'], 4:['turnover'], 6:['training','turnover'], 7:['understaffing'], 8:['training'], 9:['understaffing','scheduling'] }
+  };
+  function computeEvidence(){
+    var issues = CONFIG.issues.map(function(i){return i.id;});
+    var counts = {}; var sources = {}; issues.forEach(function(id){ counts[id]=0; sources[id]=[]; });
+    CONFIG.npcs.forEach(function(n){
+      var asked = state.asked[n.id] || [];
+      asked.forEach(function(idx){
+        var tags = (TAGS.npc[n.id] && TAGS.npc[n.id][idx]) || [];
+        tags.forEach(function(tag){ if(counts[tag]!==undefined){ counts[tag]++; sources[tag].push('NPC ' + n.id + ': ' + n.qa[idx].q); } });
+      });
+    });
+    (state.reviewsRead||new Set()).forEach(function(idx){
+      var tags = TAGS.reviews[idx] || [];
+      tags.forEach(function(tag){ if(counts[tag]!==undefined){ counts[tag]++; sources[tag].push('Review #' + (idx+1) + ': ' + CONFIG.reviews[idx].text); } });
+    });
+    if(state.metricsReviewed){
+      CONFIG.metrics.forEach(function(m, idx){
+        var tags = TAGS.metrics[idx] || [];
+        tags.forEach(function(tag){ if(counts[tag]!==undefined){ counts[tag]++; sources[tag].push('Metric: ' + m.k + ' → ' + m.v); } });
+      });
+    }
+    var max = Math.max(1, ...Object.values(counts));
+    return {counts:counts, sources:sources, max:max};
+  }
+  function topIssuesByEvidence(ev, k){
+    k = k || 3;
+    var arr = Object.entries(ev.counts);
+    var indexOf = function(id){ return CONFIG.issues.findIndex(function(i){ return i.id===id; }); };
+    arr.sort(function(a,b){ if(b[1]!==a[1]) return b[1]-a[1]; return indexOf(a[0]) - indexOf(b[0]); });
+    return arr.slice(0,k).map(function(pair){ return pair[0]; });
+  }
+  function evidenceSummaryText(id, ev, maxItems){
+    maxItems = maxItems || 3;
+    var s = ev.sources[id] || [];
+    if (!s.length) return 'No evidence collected yet.';
+    var trimmed = s.slice(0, maxItems).map(function(t){ return '• ' + t; }).join('\n');
+    var extra = s.length > maxItems ? ('\n…' + (s.length - maxItems) + ' more.') : '';
+    return s.length + ' signal(s) so far:\n' + trimmed + extra;
+  }
+
+  // ===== State, Save/Load =====
+  function initialState(){ return { visited:'Shannon', asked:{}, reviewsRead:new Set(), metricsReviewed:false, top3:[], unlocked:false, completedData:false, rankAttempts:0 }; }
+  var state = loadState();
+  function loadState(){ try{ var raw = localStorage.getItem(CONFIG.key); if(!raw) return initialState(); var obj = JSON.parse(raw); obj.reviewsRead = new Set(obj.reviewsRead||[]); return obj; }catch(e){ return initialState(); } }
+  function saveState(){ var toSave = JSON.stringify({ ...state, reviewsRead: Array.from(state.reviewsRead||[]) }); localStorage.setItem(CONFIG.key, toSave); pingSave(); renderProgress(); }
+  function resetState(opts){ opts = opts || {hard:true, reload:false}; try { if (opts.hard) { localStorage.removeItem(CONFIG.key); localStorage.removeItem(CONFIG.key + '_audio'); } } catch(e) {} state = initialState(); try { var clean = { ...state, reviewsRead: Array.from(state.reviewsRead||[]) }; localStorage.setItem(CONFIG.key, JSON.stringify(clean)); } catch(e) {} buildNav(); renderStage(); renderProgress(); fitStage(); if (opts.reload) { try { location.reload(); } catch(e) {} } }
+  function pingSave(){ var el = document.getElementById('saveState'); el.textContent='Saved'; el.style.opacity='1'; setTimeout(function(){ el.textContent='Auto‑saved'; el.style.opacity='.75'; }, 1200); }
+
+  // ===== Navigation =====
+  var NAV_ITEMS = [
+    ...CONFIG.npcs.map(function(n){ return {type:'npc', id:n.id, icon:'👤', label:'Talk: ' + n.id + ' (' + n.role + ')'}; }),
+    {type:'reviews', id:'reviews', icon:'📝', label:'Read: Online Reviews'},
+    {type:'metrics', id:'metrics', icon:'📊', label:'Review: HR Metrics'},
+    {type:'shannon', id:'shannonSummary', icon:'✅', label:'Report to Shannon'},
+    {type:'rank', id:'rankTop3', icon:'🎯', label:'Rank Top 3 Issues'}
+  ];
+  function buildNav(){
+    var nav = document.getElementById('nav');
+    nav.innerHTML='';
+    NAV_ITEMS.forEach(function(item){
+      var btn = document.createElement('button');
+      btn.innerHTML = '<span class="avatar">' + item.icon + '</span> ' + item.label + ' <span class="pill" id="pill-' + item.id + '"></span>';
+      btn.addEventListener('click',function(){ routeTo(item.id); openOverlayFor(item.id); });
+      btn.setAttribute('data-id', item.id);
+      nav.appendChild(btn);
+    });
+    highlightCurrent(state.visited);
+    updatePills();
+  }
+  function highlightCurrent(id){
+    Array.from(document.querySelectorAll('.nav [data-id]')).forEach(function(b){
+      b.removeAttribute('aria-current');
+      if(b.getAttribute('data-id')===id) b.setAttribute('aria-current','page');
+    });
+  }
+  function routeTo(id){ state.visited=id; saveState(); highlightCurrent(id); }
+
+  function calcProgress(){
+    var npcTotal = CONFIG.npcs.length;
+    var npcDone = CONFIG.npcs.filter(function(n){
+      var askedForNpcRaw = state.asked[n.id] || [];
+      var askedCount = Array.isArray(askedForNpcRaw) ? askedForNpcRaw.length : (askedForNpcRaw.size || 0);
+      return askedCount === n.qa.length;
+    }).length;
+    var reviewsCount = (state.reviewsRead && typeof state.reviewsRead.size === 'number') ? state.reviewsRead.size : (Array.isArray(state.reviewsRead) ? state.reviewsRead.length : 0);
+    var reviewsDone = reviewsCount === CONFIG.reviews.length ? 1 : 0;
+    var metricsDone = state.metricsReviewed ? 1 : 0;
+    var totalParts = npcTotal + 1 + 1;
+    var doneParts = npcDone + reviewsDone + metricsDone;
+    var pct = Math.round((doneParts/totalParts)*100);
+    var complete = doneParts===totalParts;
+    return {pct:pct, complete:complete, doneParts:doneParts, totalParts:totalParts};
+  }
+  function renderProgress(){
+    var r = calcProgress();
+    document.getElementById('progressFill').style.width = r.pct + '%';
+    document.getElementById('progressPct').textContent = r.pct + '%';
+    state.completedData = r.complete;
+    updatePills();
+  }
+  function updatePills(){
+    CONFIG.npcs.forEach(function(n){
+      var pill = document.getElementById('pill-'+n.id);
+      if(!pill) return;
+      var askedRaw = state.asked[n.id]||[];
+      var asked = Array.isArray(askedRaw) ? askedRaw.length : (askedRaw.size || 0);
+      pill.textContent = asked + '/' + n.qa.length;
+    });
+    var pr = document.getElementById('pill-reviews'); if(pr) pr.textContent = (state.reviewsRead.size||0) + '/' + CONFIG.reviews.length;
+    var pm = document.getElementById('pill-metrics'); if(pm) pm.textContent = state.metricsReviewed? '1/1':'0/1';
+  }
+
+  // ===== Stage & Overlay UI =====
+  function fitStage(){
+    var wrap = document.getElementById('stageWrap');
+    var sizer = document.getElementById('stageSizer');
+    var stage = document.getElementById('stage');
+    if(!wrap||!sizer||!stage) return;
+    var w = wrap.clientWidth || 1;
+    var h = wrap.clientHeight || 1;
+    var scale = Math.min(w/1536, h/1024);
+    if(!isFinite(scale) || scale<=0) { scale = 1; }
+    stage.style.transform = 'scale(' + scale + ')';
+    sizer.style.width = (1536*scale) + 'px';
+    sizer.style.height = (1024*scale) + 'px';
+    window.__stageScale = scale;
+    clampOverlay();
+  }
+  function renderStage(){
+    var stage = document.getElementById('stage');
+    stage.style.backgroundImage = 'url(' + CONFIG.assets.bg + ')';
+    stage.innerHTML = '';
+    CONFIG.sprites.forEach(function(s){
+      var img = document.createElement('img');
+      img.className = 'sprite' + (s.kind!=='npc' ? ' badge' : '');
+      img.style.left = (s.x - (s.kind!=='npc'?96:108)) + 'px';
+      img.style.top  = (s.y - (s.kind!=='npc'?96:108)) + 'px';
+      var src = '';
+      if(s.kind==='npc'){ src = CONFIG.assets.portraits[s.id] || PLACEHOLDERS.person; }
+      if(s.kind==='reviews'){ src = (CONFIG.assets.icons.reviews || PLACEHOLDERS.phone); img.title='Online Reviews'; }
+      if(s.kind==='metrics'){ src = (CONFIG.assets.icons.metrics || PLACEHOLDERS.folder); img.title='HR Metrics'; }
+      img.src = src;
+      if(s.id==='Carlos' || s.id==='Maya'){ img.style.setProperty('--baseScale','1.07'); }
+      img.addEventListener('error', function onErr(){ img.removeEventListener('error', onErr); if(s.kind==='reviews'){ img.src = PLACEHOLDERS.phone; } else if(s.kind==='metrics'){ img.src = PLACEHOLDERS.folder; } else { img.src = PLACEHOLDERS.person; } });
+      img.addEventListener('click', function(){ routeTo(s.id); openOverlayFor(s.id, s.x, s.y); });
+      stage.appendChild(img);
+
+      // labels for non-NPC badges (phone/folder)
+      if(s.kind!=='npc'){
+        var label = document.createElement('div');
+        label.className = 'sprite-label';
+        label.textContent = (s.id==='metrics') ? 'Metrics' : 'Reviews';
+        label.style.left = s.x + 'px';
+        label.style.top = (s.y + (s.kind!=='npc'?96:108) + 14) + 'px';
+        label.style.transform = 'translateX(-50%)';
+        stage.appendChild(label);
+      }
+    });
+    fitStage();
+  }
+  function ensureOverlay(){
+    var stage = document.getElementById('stage');
+    var o = document.getElementById('overlay');
+    if(o) return o;
+    o = document.createElement('div');
+    o.id = 'overlay';
+    o.className = 'overlay';
+    o.style.setProperty('--overlay-scale', 1.75);
+    var close = document.createElement('button'); close.className='close'; close.innerHTML='✕'; close.addEventListener('click', function(){ o.remove(); });
+    var left = document.createElement('div'); var img = document.createElement('img'); img.className='portrait'; img.id='overlayPortrait'; left.appendChild(img);
+    var right = document.createElement('div'); right.className='content'; right.id='overlayContent';
+    o.appendChild(close); o.appendChild(left); o.appendChild(right);
+    stage.appendChild(o);
+    return o;
+  }
+  function openOverlayFor(id){
+    var o = ensureOverlay();
+    var portrait = document.getElementById('overlayPortrait');
+    var content = document.getElementById('overlayContent');
+    content.innerHTML = '';
+    portrait.className = 'portrait';
+    var isNPC = CONFIG.npcs.some(function(n){return n.id===id;});
+    if(isNPC){ portrait.classList.add('npc-bg'); portrait.src = (CONFIG.assets.portraits[id] || PLACEHOLDERS.person); }
+    else if(id==='reviews'){ portrait.classList.add('plain'); portrait.src = (CONFIG.assets.icons.reviews || PLACEHOLDERS.phone); }
+    else if(id==='metrics'){ portrait.classList.add('plain'); portrait.src = (CONFIG.assets.icons.metrics || PLACEHOLDERS.folder); }
+    else { portrait.removeAttribute('src'); }
+
+    if(isNPC){ renderNPCInto(id, content); }
+    else if(id==='reviews'){ renderReviewsInto(content); }
+    else if(id==='metrics'){ renderMetricsInto(content); }
+    else if(id==='rankTop3' || id==='rank'){ renderRankerInto(content); }
+    else if(id==='shannonSummary'){ renderShannonSummaryInto(content); }
+    else if(id==='openSaveLoad'){ renderSaveLoadInto(content); }
+    else { content.appendChild(el('<div class="subtle">Choose a section.</div>')); }
+
+    positionOverlay(o);
+  }
+  function positionOverlay(o){
+    var os = 1.75; // overlay scale
+    var stageW = 1536, stageH = 1024;
+    var ow = (o.offsetWidth || 760) * os;
+    var oh = (o.offsetHeight || 460) * os;
+    var left = Math.max(20, Math.round((stageW - ow) / 2));
+    var top  = Math.max(20, Math.round((stageH - oh) / 2));
+    o.style.left = left + 'px';
+    o.style.top  = top + 'px';
+    clampOverlay();
+  }
+  function clampOverlay(){
+    var o = document.getElementById('overlay');
+    if(!o) return;
+    var os = 1.75;
+    var ow = (o.offsetWidth||760) * os;
+    var oh = (o.offsetHeight||460) * os;
+    var maxLeft = 1536 - ow - 20;
+    var maxTop  = 1024 - oh - 20;
+    var left = parseFloat(o.style.left||'740');
+    var top  = parseFloat(o.style.top||'40');
+    if(isNaN(left)) left = 740; if(isNaN(top)) top = 40;
+    left = Math.max(20, Math.min(left, Math.max(20, maxLeft)));
+    top  = Math.max(20, Math.min(top, Math.max(20, maxTop)));
+    o.style.left = left + 'px'; o.style.top = top + 'px';
+  }
+
+  // ===== Renderers =====
+  function renderNPCInto(npcId, target){
+    var npc = CONFIG.npcs.find(function(n){ return n.id===npcId; });
+    var d = document.createElement('div'); d.className='dialogue';
+    d.appendChild(el('<div class="bubble from-npc"><strong><span class="avatar ' + npc.color + '">' + npc.id[0] + '</span> ' + npc.id + ' — ' + npc.role + '</strong><br>' + npc.intro + '</div>'));
+    var asked = state.asked[npcId] || [];
+    npc.qa.forEach(function(pair, idx){ if(asked.includes(idx)){ d.appendChild(el('<div class="bubble from-player"><em>You asked:</em> ' + pair.q + '</div>')); d.appendChild(el('<div class="bubble from-npc">' + pair.a + '</div>')); } });
+    var remaining = npc.qa.map(function(_,i){ return i; }).filter(function(i){ return !asked.includes(i); });
+    if(remaining.length){ var choiceWrap = el('<div class="choices"></div>'); remaining.forEach(function(i){ var btn = el('<button>' + npc.qa[i].q + '</button>'); btn.addEventListener('click',function(){ state.asked[npcId] = [ ...(state.asked[npcId]||[]), i ]; saveState(); openOverlayFor(npcId); }); choiceWrap.appendChild(btn); }); d.appendChild(choiceWrap); }
+    else { d.appendChild(el('<div class="subtle">You have asked all available questions for ' + npc.id + '. ✅</div>')); }
+    target.appendChild(d); renderProgress();
+  }
+  function renderReviewsInto(target){
+    var inner = document.createElement('div');
+    inner.appendChild(el('<h2>Recent Online Reviews</h2><p class="subtle">Read all reviews and mark them as reviewed to progress.</p>'));
+    CONFIG.reviews.forEach(function(r, idx){
+      var read = state.reviewsRead.has(idx);
+      inner.appendChild(el('<div class="review"><div class="stars">' + '★'.repeat(r.stars) + '☆'.repeat(5-r.stars) + '</div><div>' + r.text + '</div></div>'));
+      var btn = el('<button class="btn ' + (read?'':'primary') + '" style="margin:6px 0">' + (read?'Reviewed':'Mark as reviewed') + '</button>');
+      btn.addEventListener('click',function(){ state.reviewsRead.add(idx); saveState(); openOverlayFor('reviews'); });
+      inner.appendChild(btn);
+    });
+    target.appendChild(inner); renderProgress();
+  }
+  function renderMetricsInto(target){
+    var inner = document.createElement('div');
+    inner.appendChild(el('<h2>HR & Operations Metrics Snapshot</h2><p class="subtle">Review the metrics below, then confirm review.</p>'));
+    var grid = el('<div class="metrics"></div>');
+    CONFIG.metrics.forEach(function(m){ grid.appendChild(el('<div class="metric"><h4>' + m.k + '</h4><div class="val">' + m.v + '</div></div>')); });
+    inner.appendChild(grid);
+    var bar = el('<div style="margin-top:10px" class="toolbar"></div>');
+    var btn = el('<button class="btn primary" id="confirmMetrics">' + (state.metricsReviewed?'Reviewed ✔':'I have reviewed these metrics') + '</button>');
+    btn.addEventListener('click',function(){ state.metricsReviewed=true; saveState(); openOverlayFor('metrics'); });
+    bar.appendChild(btn); inner.appendChild(bar);
+    target.appendChild(inner); renderProgress();
+  }
+  function renderShannonSummaryInto(target){
+    var r = calcProgress();
+    target.appendChild(el('<h2>Report Back to Shannon</h2>'));
+    target.appendChild(el('<p>' + (r.complete? 'You’ve completed data gathering. You may proceed to prioritize the top issues.' : 'You still have items to review before we prioritize issues.') + '</p>'));
+    var list = [];
+    CONFIG.npcs.forEach(function(n){ var asked=(state.asked[n.id]||[]).length; if(asked<n.qa.length) list.push('Ask all questions for ' + n.id + '.'); });
+    if((state.reviewsRead.size||0)<CONFIG.reviews.length) list.push('Read and mark all online reviews.');
+    if(!state.metricsReviewed) list.push('Confirm that you have reviewed the HR & operations metrics.');
+    if(list.length){ var ul = el('<ul class="subtle"></ul>'); list.forEach(function(t){ ul.appendChild(el('<li>' + t + '</li>')); }); target.appendChild(ul); }
+    var proceed = el('<button class="btn primary" ' + (r.complete?'':'disabled') + '>I’m ready to prioritize</button>');
+    proceed.addEventListener('click',function(){ openOverlayFor('rankTop3'); });
+    target.appendChild(proceed); renderProgress();
+  }
+  function renderRankerInto(target){
+    var r = calcProgress();
+    target.appendChild(el('<h2>Prioritize the Top 3 Issues</h2>'));
+    target.appendChild(el('<p class="subtle">Drag items from the list into the three priority slots. Then submit to get Shannon’s feedback.</p>'));
+    if(!r.complete){ target.appendChild(el('<p class="subtle" style="color:var(--warn)">Heads up: You haven’t completed data gathering — you can practice here, but Shannon will not accept your assessment until all data are reviewed.</p>')); }
+
+    var wrap = el('<div class="row cols-2"></div>');
+    var left = el('<div><h3>Issues</h3><div class="issues" id="issues"></div></div>');
+    var right = el('<div><h3>Your Top 3</h3><div class="top3" id="top3"></div></div>');
+
+    var top3El = right.querySelector('#top3');
+    [0,1,2].forEach(function(i){ var slot = el('<div class="slot" data-slot="' + i + '" tabindex="0" aria-dropeffect="move">Drop here</div>'); addDropHandlers(slot); top3El.appendChild(slot); });
+
+    var issuesEl = left.querySelector('#issues');
+    var ev = computeEvidence();
+    var maxBar = Math.max(1, ev.max);
+    CONFIG.issues.forEach(function(issue){
+      var c = ev.counts[issue.id]||0;
+      var it = el('<div class="item" draggable="true" data-id="' + issue.id + '" tabindex="0" aria-grabbed="false"><div style="display:flex;align-items:center;gap:8px;justify-content:space-between;width:100%"><div><strong>' + issue.title + '</strong><div class="hint">' + issue.hint + '</div></div><div class="pill" title="' + evidenceSummaryText(issue.id, ev).replace(/"/g,'&quot;') + '">Evidence: ' + c + '</div></div><div aria-hidden="true" style="height:6px;background:#0b1320;border-radius:999px;margin-top:6px;overflow:hidden"><div style="height:100%;width:' + Math.round((c/maxBar)*100) + '%;background:linear-gradient(90deg,var(--accent),#6cf)"></div></div></div>');
+      addDragHandlers(it); issuesEl.appendChild(it);
+    });
+
+    wrap.appendChild(left); wrap.appendChild(right); target.appendChild(wrap);
+
+    var actions = el('<div class="toolbar" style="margin-top:10px"></div>');
+    var submit = el('<button class="btn primary">Submit to Shannon</button>');
+    var clear = el('<button class="btn">Clear</button>');
+    actions.appendChild(submit); actions.appendChild(clear);
+    target.appendChild(actions);
+
+    var feedback = el('<div id="feedback" class="subtle" style="margin-top:10px"></div>');
+    target.appendChild(feedback);
+
+    submit.addEventListener('click',function(){
+      var picks = Array.from(top3El.querySelectorAll('.slot')).map(function(s){ return s.getAttribute('data-id'); }).filter(Boolean);
+      if(picks.length<3){ showFeedback('Please fill all three priority slots before submitting.', 'warn'); return; }
+      state.top3 = picks; state.rankAttempts++; saveState();
+      var correctSet = new Set(CONFIG.correctTop3);
+      var correct = picks.every(function(id){ return correctSet.has(id); }) && picks.length===3;
+      Array.from(top3El.querySelectorAll('.slot')).forEach(function(s){ s.classList.remove('correct','incorrect'); s.classList.add(correct? 'correct':'incorrect'); });
+      var ev2 = computeEvidence();
+      var evTop3 = topIssuesByEvidence(ev2,3);
+      var titleById = function(id){ var f = CONFIG.issues.find(function(i){ return i.id===id; }); return f? f.title : id; };
+      var lines = [];
+      lines.push(correct ? 'Shannon: “I think your assessment is spot on!” ✅' : 'Shannon: “Hmmm, I don’t know that I agree with that being the top priority.” ❌');
+      lines.push('');
+      lines.push('Evidence check (based on what you collected):');
+      lines.push('Top signals → ' + evTop3.map(function(id){ return titleById(id) + ' (' + (ev2.counts[id]||0) + ')'; }).join(', '));
+      lines.push('Your picks → ' + picks.map(function(id){ return titleById(id) + ' (' + (ev2.counts[id]||0) + ')'; }).join(', '));
+      var notChosenTop = evTop3.filter(function(id){ return picks.indexOf(id)===-1; });
+      if(notChosenTop.length){ lines.push('Consider prioritizing: ' + notChosenTop.map(titleById).join(', ')); notChosenTop.slice(0,2).forEach(function(id){ var s = ev2.sources[id]||[]; if(s.length){ lines.push('- ' + titleById(id) + ' evidence e.g., ' + s.slice(0,2).join(' | ')); } }); }
+      var msg = lines.join(String.fromCharCode(10));
+      showFeedback(msg, correct? 'good':'bad');
+    });
+
+    clear.addEventListener('click',function(){ Array.from(top3El.querySelectorAll('.slot')).forEach(function(s){ clearSlot(s); }); saveState(); openOverlayFor('rankTop3'); });
+  }
+  function showFeedback(msg,type){ var fb = document.getElementById('feedback'); fb.textContent = msg; fb.style.color = type==='good'? 'var(--good)' : type==='bad'? 'var(--bad)':'var(--warn)'; }
+
+  // Drag & drop helpers
+  var dragId=null; function addDragHandlers(elm){ elm.addEventListener('dragstart',function(e){ dragId=elm.getAttribute('data-id'); e.dataTransfer.setData('text/plain',dragId); requestAnimationFrame(function(){ elm.style.opacity='.6'; }); }); elm.addEventListener('dragend',function(){ dragId=null; elm.style.opacity='1'; }); elm.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ var slot=document.querySelector('.slot:not(.filled)'); if(slot) placeInSlot(elm.getAttribute('data-id'),slot); } }); }
+  function addDropHandlers(slot){ slot.addEventListener('dragover',function(e){ e.preventDefault(); slot.classList.add('drop-ok'); }); slot.addEventListener('dragleave',function(){ slot.classList.remove('drop-ok'); }); slot.addEventListener('drop',function(e){ e.preventDefault(); slot.classList.remove('drop-ok'); var id=e.dataTransfer.getData('text/plain')||dragId; placeInSlot(id,slot); }); slot.addEventListener('keydown',function(e){ if(e.key==='Backspace'||e.key==='Delete'){ clearSlot(slot); } }); }
+  function placeInSlot(id,slot){ if(!id) return; var existing=document.querySelector('.slot[data-id="' + id + '"]'); if(existing){ clearSlot(existing); } var issue = CONFIG.issues.find(function(i){ return i.id===id; }); slot.textContent=issue.title; slot.setAttribute('data-id',id); slot.classList.add('filled'); }
+  function clearSlot(slot){ slot.textContent='Drop here'; slot.removeAttribute('data-id'); slot.classList.remove('filled','correct','incorrect'); }
+
+  // Save/Load overlay
+  function renderSaveLoadInto(target){
+    target.innerHTML = '';
+    target.appendChild(el('<h2>Save / Load Progress</h2>'));
+    target.appendChild(el('<p class="subtle">Progress is saved automatically to your browser (device‑specific). You can also export a code to save elsewhere and paste it later to continue.</p>'));
+    var code=btoa(JSON.stringify({ ...state, reviewsRead:Array.from(state.reviewsRead||[]) }));
+    target.appendChild(el('<div class="code" style="max-height:180px;overflow:auto">' + code + '</div>'));
+    var input=el('<textarea class="code" rows="4" style="width:100%" placeholder="Paste a save code here to load..."></textarea>');
+    target.appendChild(input);
+    var bar=el('<div class="toolbar" style="margin-top:8px"></div>');
+    var loadBtn=el('<button class="btn primary">Load from Code</button>');
+    var copyBtn=el('<button class="btn">Copy Code</button>');
+    var hardResetBtn=el('<button class="btn warn">Hard Reset (Clear Device Save)</button>');
+    bar.appendChild(loadBtn); bar.appendChild(copyBtn); bar.appendChild(hardResetBtn); target.appendChild(bar);
+    loadBtn.addEventListener('click',function(){ try{ var obj=JSON.parse(atob(input.value.trim())); obj.reviewsRead=new Set(obj.reviewsRead||[]); state=obj; saveState(); alert('Loaded!'); openOverlayFor(state.visited||'Shannon'); }catch(e){ alert('Invalid code.'); } });
+    copyBtn.addEventListener('click',function(){ navigator.clipboard.writeText(code); alert('Copied!'); });
+    hardResetBtn.addEventListener('click',function(){ if(confirm('This will clear your saved progress on this device. Continue?')){ resetState({hard:true}); alert('Progress cleared. Starting fresh.'); } });
+  }
+
+  // ===== Wire controls & boot =====
+  document.getElementById('openSaveLoad').addEventListener('click', function(){ routeTo('openSaveLoad'); openOverlayFor('openSaveLoad'); });
+  document.getElementById('resetBtn').addEventListener('click', function(){ if(confirm('Reset all progress and clear device save?')) resetState({hard:true, reload:false}); });
+  var ambTgl = document.getElementById('ambienceToggle'); if(ambTgl){ ambTgl.addEventListener('click', toggleAmbience); }
+
+  buildNav(); renderStage(); renderProgress(); fitStage(); initAudio();
+  window.addEventListener('resize', fitStage);
+  // respectful autoplay after first interaction
+  window.addEventListener('pointerdown', function one(){ if(__audioPref && __audioPref.enabled){ try{ __ambAudio && __ambAudio.play(); }catch(e){} try{ __musicAudio && __musicAudio.play(); }catch(e){} } window.removeEventListener('pointerdown', one); }, { once:true });
+
+  // ===== Minimal Self‑Tests =====
+  try {
+    // Test 1: nav renders the expected number of items
+    console.assert(document.querySelectorAll('#nav button').length >= (CONFIG.npcs.length + 3), 'Test 1 failed: nav items missing');
+    // Test 2: stage exists and background style applies
+    var st = document.getElementById('stage');
+    console.assert(!!st && getComputedStyle(st).backgroundImage !== 'none', 'Test 2 failed: stage bg not set');
+    // Test 3: sprites rendered
+    var spriteCount = st ? st.querySelectorAll('.sprite').length : 0;
+    console.assert(spriteCount === CONFIG.sprites.length, 'Test 3 failed: sprites not all rendered');
+    // Test 3b: labels exist for badges
+    var labelCount = st ? st.querySelectorAll('.sprite-label').length : 0; console.assert(labelCount >= 2, 'Test 3b failed: badge labels missing');
+    // Test 4: functions exist
+    console.assert(typeof fitStage === 'function' && typeof renderStage === 'function', 'Test 4 failed: core functions missing');
+  } catch(e) { console.warn('Self-tests error (non-fatal):', e); }
+
+  // Helper to build elements from HTML string
+  function el(html){ var d = document.createElement('div'); d.innerHTML=html.trim(); return d.firstChild; }
+})();
+</script>
+</body>
+</html>
