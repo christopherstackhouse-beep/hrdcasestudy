@@ -26,7 +26,8 @@
     main{grid-row:2;grid-column:2;padding:18px;display:flex;justify-content:center;align-items:flex-start;overflow:hidden}
     .stageWrap{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}
     .stageSizer{position:relative;width:1536px;height:1024px}
-    .stage{position:absolute;left:0;top:0;width:1536px;height:1024px;background:#000 center/cover no-repeat;border:1px solid rgba(255,255,255,.08);border-radius:16px;box-shadow:0 10px 30px var(--shadow);transform-origin:top left;z-index:1}
+    .stage{position:absolute;left:0;top:0;width:1536px;height:1024px;background:transparent;border:none;border-radius:16px;box-shadow:0 10px 30px var(--shadow);transform-origin:top left;z-index:1}
+    .stage > img.bg{position:absolute;left:0;top:0;width:1536px;height:1024px;display:block}
 
     /* Map icons */
     .sprite{position:absolute;display:block;width:216px;height:216px;object-fit:contain;cursor:pointer;box-shadow:none;background:transparent;border:none;border-radius:0;filter:none;z-index:5;transition:transform .18s ease;transform-origin:center center;transform:scale(calc(var(--baseScale,1) * var(--hoverScale,1)))}
@@ -34,12 +35,18 @@
     .sprite:hover{--hoverScale:1.1;z-index:6}
 
     /* Overlay */
-    .overlay{position:absolute;max-width:760px;min-width:640px;background:rgba(17,23,35,.96);border:1px solid rgba(255,255,255,.1);border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.5);display:grid;grid-template-columns:220px 1fr;gap:14px;padding:14px;transform:scale(var(--overlay-scale,1));transform-origin:top left;z-index:20}
+    .overlay{position:absolute;max-width:860px;min-width:640px;background:rgba(17,23,35,.96);border:1px solid rgba(255,255,255,.1);border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.5);display:grid;grid-template-columns:220px 1fr;gap:14px;padding:14px;transform:scale(var(--overlay-scale,1));transform-origin:top left;z-index:20}
     .overlay .portrait{width:100%;height:260px;object-fit:cover;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:#0b0f14}
     .overlay .portrait.npc-bg{background:#e5b451}
+    .overlay .portrait.npc-face{object-position:top center}
     .overlay .portrait.plain{width:auto!important;height:auto!important;max-width:100%;max-height:260px;object-fit:contain!important;background:#e5b451!important}
     .overlay .close{position:absolute;right:10px;top:8px;border:none;background:transparent;color:var(--muted);font-size:22px;cursor:pointer}
     .overlay .content{max-height:420px;overflow:auto}
+    /* Full-width mode (no portrait column) */
+    .overlay.full{grid-template-columns:1fr}
+    .overlay.full #overlayLeft{display:none}
+    /* Hide numeric evidence counters in Rank overlay (keep progress bars) */
+    .overlay.full .issues .pill{display:none !important}
 
     .card{background:var(--panel);border:1px solid rgba(255,255,255,.06);border-radius:16px;box-shadow:0 8px 24px var(--shadow)}
     .card .inner{padding:16px}
@@ -80,7 +87,7 @@
     footer{grid-column:1/-1;color:var(--muted);font-size:12px;text-align:center;padding:10px}
 
     /* Labels under badges */
-    .sprite-label{position:absolute;color:#e0d7bd;font:700 18px/1 "Trebuchet MS","Comic Sans MS","Segoe UI",Arial,sans-serif;text-align:center;transform-origin:center top;transition:transform .18s ease;pointer-events:none;z-index:5}
+    .sprite-label{position:absolute;color:#e0d7bd;font:700 31.5px/1 "Trebuchet MS","Comic Sans MS","Segoe UI",Arial,sans-serif;text-align:center;transform-origin:center top;transition:transform .18s ease;pointer-events:none;z-index:5}
     .sprite:hover + .sprite-label{transform:scale(1.1);z-index:7}
   </style>
 </head>
@@ -100,7 +107,6 @@
       <button id="openSaveLoad"><span class="avatar">💾</span> Save / Load</button>
       <button id="ambienceToggle"><span class="avatar">🔊</span> Ambience: Off</button>
       <button id="resetBtn" class="btn warn">Reset Progress</button>
-      <button id="forceResetBtn" class="btn warn">Reset & Reload</button>
     </div>
   </aside>
   <main id="main">
@@ -115,77 +121,84 @@
 <script>
 (function(){
   const CONFIG = {
-    version: '1.2.4-fixed-bg',
+    version: '1.3.0-stable',
     key: 'hrd_assessment_game_v2',
     assets: {
       bg: 'restaurant_bg.jpg',
       portraits: { Shannon:'shannon.png', Carlos:'carlos.png', Maya:'maya.png', Jess:'jess.png', Avery:'avery.png', Liam:'liam.png' },
       icons: { reviews:'phone.png', metrics:'folder.png' },
-      audio: { ambience: 'background.wav', music:'intro_music.wav' }
+      audio: { ambience: 'background.wav', music:'music.mp3' }
     },
+    // positions tuned to your last adjustments
     sprites: [
-      { id:'Shannon', x:820, y:260, kind:'npc' },
-      { id:'Carlos',  x:210, y:340, kind:'npc' },
-      { id:'Maya',    x:535, y:500, kind:'npc' },
-      { id:'Jess',    x:1020, y:645, kind:'npc' },
-      { id:'Avery',   x:225, y:695, kind:'npc' },
-      { id:'Liam',    x:1160, y:260, kind:'npc' },
-      { id:'reviews', x:1360, y:870, kind:'reviews' },
-      { id:'metrics', x:1185, y:870, kind:'metrics' }
+      { id:'Shannon', x:820,  y:220, kind:'npc' },
+      { id:'Carlos',  x:160,  y:390, kind:'npc' },
+      { id:'Maya',    x:560,  y:495, kind:'npc' },
+      { id:'Jess',    x:1020, y:630, kind:'npc' },
+      { id:'Avery',   x:230,  y:710, kind:'npc' },
+      { id:'Liam',    x:1140, y:250, kind:'npc' },
+      { id:'reviews', x:1360, y:895, kind:'reviews' },
+      { id:'metrics', x:1010, y:895, kind:'metrics' }
     ],
     issues: [
-      { id:'understaffing', title:'Chronic understaffing at peak hours (FOH/BOH below target)', hint:'Targets: 16 BOH vs 10 current; 30 FOH vs 20 current.' },
-      { id:'turnover', title:'High turnover in FOH roles, driving constant backfilling', hint:'45–55% FOH turnover reported; 30–40% BOH.' },
-      { id:'training', title:'Inconsistent onboarding & training; unclear service & kitchen SOPs', hint:'New hires learn “on the fly”; few standards documented.' },
-      { id:'scheduling', title:'Unstable schedules and last‑minute changes', hint:'Schedule posted late; frequent swaps & overtime.' },
-      { id:'cross_training', title:'Limited cross‑training across roles', hint:'Few backups on grill, expo, or host stand.' },
-      { id:'communication', title:'Weak pre‑shift communication & FOH/BOH handoffs', hint:'No daily huddle; expo guidance variable.' },
-      { id:'performance_mgmt', title:'Sparse coaching/feedback cadence', hint:'Little structured feedback beyond corrective notes.' },
-      { id:'comp_benefits', title:'Compensation/benefits not competitive locally', hint:'Staff cite higher pay at competitors.' },
-      { id:'culture', title:'FOH–BOH friction & stress; morale dips at rush', hint:'Tension during long waits & ticket backups.' },
-      { id:'mgr_load', title:'Managers overloaded with admin; less time on floor‑coaching', hint:'Payroll/inventory consume prime hours.' },
+      { id:'understaffing', title:'Understaffing leading to poor guest experiences' },
+      { id:'turnover', title:'High turnover' },
+      { id:'training', title:'Inconsistent onboarding & training' },
+      { id:'scheduling', title:'Unstable schedules and last-minute changes' },
+      { id:'communication', title:'Weak pre-shift communication' },
+      { id:'performance_mgmt', title:'Inconsistent coaching or feedback from supervisors' },
+      { id:'culture', title:'Communication gaps between front of house and back of house staff' },
+      { id:'mgr_load', title:'Managers overloaded with admin; less time on floor-coaching' }
     ],
     correctTop3: ['understaffing','turnover','training'],
     npcs: [
       { id:'Shannon', role:'Operating Partner', color:'npc-Shannon',
-        intro:"Welcome in. I’m Shannon — thanks for helping us look under the hood.",
+        intro:`Welcome in. I’m Shannon — thanks for helping us look under the hood.`,
         qa:[
-          { q:'What are your current staffing levels vs your targets?', a:'Back‑of‑house: 10 on roster; target is 16. Front‑of‑house: 20 on roster; target is 30.' },
-          { q:'Financially, how is the restaurant performing?', a:'About $4M in annual revenue at ~16% profit margin. We are profitable, but I’m convinced we’re leaving money on the table due to staffing issues.' },
-          { q:'Where do staffing constraints hurt the guest experience most?', a:'Peaks. Wait times jump, table turns slow, and we sometimes cap reservations because the floor or line can’t keep up.' },
-          { q:'What have you tried so far?', a:'Recruiting pushes, some sign‑on bonuses, ad hoc training, and asking leaders to pitch in on the floor when we’re slammed.' },
+          { q:`In our assessment, what areas of the business should we be focused on?`, a:`Staffing is our biggest issue. It’s been hard to get people in and even harder to keep them.` },
+          { q:`What are your staffing targets and where are you at currently?`, a:`Back‑of‑house: 10 on roster; target is 16. Front‑of‑house: 20 on roster; target is 30.` },
+          { q:`What have you tried so far to fill the gaps?`, a:`Recruiting pushes, some sign‑on bonuses, ad hoc training, and asking leaders to pitch in on the floor when we’re slammed.` },
+          { q:`Where do you see the staffing gaps having the biggest impact?`, a:`Peaks. Wait times jump, table turns slow, and we sometimes cap reservations because the floor or line can’t keep up.` },
+          { q:`What do you think is driving the turn-over?`, a:`It’s hard to tell. I haven’t been able to keep up on exit interviews. This seems to be an industry‑wide issue for restaurants.` }
         ] },
       { id:'Carlos', role:'Sous Chef', color:'npc-Carlos',
-        intro:'I run PM line most nights. Happy to share what I see.',
+        intro:`I run PM line most nights. Happy to share what I see.`,
         qa:[
-          { q:'Where are the bottlenecks on the line?', a:'Grill and sauté back up when we’re short. Expo gets chaotic without a clear point person.' },
-          { q:'How are new cooks trained?', a:'Mostly shadow shifts. No real checklist. Some pick it up fast; others are lost for a week.' },
-          { q:'Do you get schedule stability?', a:'Not really. We swap a lot and use overtime to plug holes.' },
+          { q:`How are things going at the restaurant?`, a:`Things could be better. We have a great menu that customers love. The problem is our execution. Guests are waiting too long for their food and it’s too often incorrect due to communication breakdowns between front of house and back of house.` },
+          { q:`How are new cooks trained?`, a:`On the job. Mostly shadow shifts. Some pick it up fast; others are lost for a week or more depending on their prior experience.` },
+          { q:`Do you have schedule stability?`, a:`Not really. We swap a lot and use overtime to plug holes.` },
+          { q:`If you could change one thing about the restaurant, what would it be?`, a:`Consistency. If we had consistent staff and communication that would allow us to offer quality food and experiences to our guests.` }
         ] },
       { id:'Maya', role:'Line Cook', color:'npc-Maya',
-        intro:'I’m on sauté three nights, pantry two.',
+        intro:`I’m on sauté three nights, pantry two.`,
         qa:[
-          { q:'How long did it take to feel confident?', a:'About a month. Would’ve been faster with a station guide and photos.' },
-          { q:'Any cross‑training?', a:'I’d like more. If grill calls out, tickets stack up.' },
+          { q:`What has your training experience been like?`, a:`After the HR orientation stuff, I was thrown right into the mix. I shadowed another cook for a few shifts and then due to call‑offs I had to just jump right in. It was pretty chaotic.` },
+          { q:`How long did it take to feel confident in your job?`, a:`I have a decent amount of cooking experience so that helped. I’d say about a month or a little longer. Would’ve been faster with station guides and photos.` },
+          { q:`How often do you receive helpful feedback from your supervisor?`, a:`Not very often. It’s usually just things I need to fix on the fly. I hear about what I do wrong, but not about what I do right.` }
         ] },
       { id:'Jess', role:'Server', color:'npc-Jess',
-        intro:'I’ve served here for a year.',
+        intro:`I’ve served here for a year.`,
         qa:[
-          { q:'Where do guests feel pain?', a:'Longer waits and slower drink refills when we’re short on floor staff.' },
-          { q:'Pre‑shift communication?', a:'Depends on who’s leading. Some nights we skip it.' },
-          { q:'Turnover?', a:'We lose people to places that offer steadier schedules or a buck more an hour.' },
+          { q:`What has the training experience been like in your 1 year with the restaurant?`, a:`I did orientation with Shannon, and then I shadowed a server who has been here quite awhile. Since then I haven’t really had any training except for learning new menu items.` },
+          { q:`What does pre-shift communication look like?`, a:`Depends on who’s leading. Some nights we skip it.` },
+          { q:`Turnover seems to come up in my conversations here. Have any thoughts on the turnover?`, a:`We lose people to places that offer steadier schedules or a buck more an hour. It sucks.` },
+          { q:`If you could change one thing about the restaurant, what would it be?`, a:`Ummm, probably communication. Sometimes it feels like I’m finding things out through the grapevine that would have been really helpful to know sooner.` }
         ] },
       { id:'Avery', role:'Host', color:'npc-Avery',
-        intro:'I’m usually on the door Friday–Sunday.',
+        intro:`I’m usually on the door Friday–Sunday.`,
         qa:[
-          { q:'Reservations & quotes?', a:'I sometimes pad quotes because I know the line is buried. We cap walk‑ins more than we should.' },
-          { q:'Training?', a:'I learned the book by shadowing. No reference guide for table pacing or large‑party flow.' },
+          { q:`What has your training experience been like?`, a:`After orientation I was paired with a host who has been here for awhile. They took me under their wing to show me how everything works.` },
+          { q:`What do you like about working here?`, a:`The schedule works for me while I take classes. I just wish they weren’t always bugging me to come in because we’re short‑staffed.` },
+          { q:`How often do you receive helpful feedback from your supervisor?`, a:`We have our pre‑shift stand up meeting where we get to hear kudos or things we need to make sure we remember for the shift.` }
         ] },
       { id:'Liam', role:'Bartender', color:'npc-Liam',
-        intro:'Bar and service well are my world.',
+        intro:`Bar and service well are my world.`,
         qa:[
-          { q:'Where does service lag?', a:'When I’m solo in the well and the bar is full, ticket times slip.' },
-          { q:'Any SOPs?', a:'We have recipes, but no formal speed‑well setup guide posted.' },
+          { q:`What was your onboarding experience like?`, a:`I trained with Zeke who used to be the bar lead. He’s not here anymore. Anyway, Zeke just kinda showed me the ropes. Then after awhile I was taking shifts on my own.` },
+          { q:`What changes would you like to see at the restaurant?`, a:`Well staffing for sure. It seems like we aren’t keeping people around long enough for them to get good. That leads to a lot of stress and communication break downs.` },
+          { q:`When is the last time you’ve had some refresher training?`, a:`I can’t remember, honestly. Any training is typically just on new recipes for seasonal cocktails.` },
+          { q:`Where does service lag?`, a:`When I’m flying solo… which happens a lot, and the bar is full, that’s when ticket times slip.` },
+          { q:`Are there standard operating procedures?`, a:`We have recipes, but no formal setup guide posted. I just kinda have it all in my head.` }
         ] }
     ],
     reviews:[
@@ -230,7 +243,7 @@
   function saveAudioPref(){ try { localStorage.setItem(CONFIG.key + '_audio', JSON.stringify(__audioPref)); } catch(e){} }
   function clamp01(x){ x = +x; if(!isFinite(x)) return 0; return Math.max(0, Math.min(1, x)); }
   function getAmbienceUrl(){ return (CONFIG.assets.audio && CONFIG.assets.audio.ambience) || 'background.wav'; }
-  function getMusicUrl(){ return (CONFIG.assets.audio && CONFIG.assets.audio.music) || 'intro_music.wav'; }
+  function getMusicUrl(){ return (CONFIG.assets.audio && CONFIG.assets.audio.music) || 'music.mp3'; }
   function initAudio(){
     try{
       if(!__ambAudio){
@@ -245,6 +258,14 @@
         __musicAudio.src = getMusicUrl();
         __musicAudio.loop = true; __musicAudio.preload = 'auto';
         __musicAudio.volume = clamp01(Math.min(__audioPref.volMusic, (__audioPref.volAmb||0) * 0.7));
+        __musicAudio.addEventListener('error', function(){
+          if(!__musicAudio.__triedWav){
+            __musicAudio.__triedWav = true;
+            __musicAudio.src = 'intro_music.wav';
+            __musicAudio.load();
+            if(__audioPref.enabled){ __musicAudio.play().catch(function(){}); }
+          }
+        });
       }
       // Re-apply 70% cap if prefs changed
       var cap = clamp01((__ambAudio ? __ambAudio.volume : (__audioPref.volAmb||0)) * 0.7);
@@ -265,12 +286,12 @@
   // ===== Evidence Engine =====
   const TAGS = {
     npc: {
-      Shannon: { 0:['understaffing'], 1:['understaffing'], 2:['understaffing'], 3:['training','turnover'] },
-      Carlos:  { 0:['understaffing','communication'], 1:['training'], 2:['scheduling','understaffing'] },
-      Maya:    { 0:['training'], 1:['cross_training'] },
-      Jess:    { 0:['understaffing'], 1:['communication'], 2:['turnover','comp_benefits','scheduling'] },
-      Avery:   { 0:['understaffing'], 1:['training'] },
-      Liam:    { 0:['understaffing'], 1:['training'] },
+      Shannon: { 0:['understaffing','turnover'], 1:['understaffing'], 2:['training','turnover'], 3:['understaffing'], 4:['turnover'] },
+      Carlos:  { 0:['communication','understaffing'], 1:['training'], 2:['scheduling','understaffing'], 3:['communication','understaffing'] },
+      Maya:    { 0:['training','understaffing'], 1:['training'], 2:['performance_mgmt'] },
+      Jess:    { 0:['training'], 1:['communication'], 2:['turnover','comp_benefits','scheduling'], 3:['communication'] },
+      Avery:   { 0:['training'], 1:['understaffing','scheduling'], 2:['communication','performance_mgmt'] },
+      Liam:    { 0:['training'], 1:['understaffing','communication','turnover'], 2:['training'], 3:['understaffing'], 4:['training'] },
     },
     reviews: { 0:['understaffing'], 1:['understaffing'], 2:['understaffing'], 3:['communication'], 4:['understaffing'] },
     metrics: { 0:['understaffing'], 1:['understaffing'], 4:['turnover'], 6:['training','turnover'], 7:['understaffing'], 8:['training'], 9:['understaffing','scheduling'] }
@@ -319,7 +340,7 @@
   var state = loadState();
   function loadState(){ try{ var raw = localStorage.getItem(CONFIG.key); if(!raw) return initialState(); var obj = JSON.parse(raw); obj.reviewsRead = new Set(obj.reviewsRead||[]); return obj; }catch(e){ return initialState(); } }
   function saveState(){ var toSave = JSON.stringify({ ...state, reviewsRead: Array.from(state.reviewsRead||[]) }); localStorage.setItem(CONFIG.key, toSave); pingSave(); renderProgress(); }
-  function resetState(opts){ opts = opts || {hard:true, reload:false}; try { if (opts.hard) { localStorage.removeItem(CONFIG.key); localStorage.removeItem(CONFIG.key + '_audio'); } } catch(e) {} state = initialState(); try { var clean = { ...state, reviewsRead: Array.from(state.reviewsRead||[]) }; localStorage.setItem(CONFIG.key, JSON.stringify(clean)); } catch(e) {} buildNav(); renderStage(); renderProgress(); fitStage(); if (opts.reload) { try { location.reload(); } catch(e) {} } }
+  function resetState(){ try { localStorage.removeItem(CONFIG.key); localStorage.removeItem(CONFIG.key + '_audio'); } catch(e) {} state = initialState(); try { var clean = { ...state, reviewsRead: Array.from(state.reviewsRead||[]) }; localStorage.setItem(CONFIG.key, JSON.stringify(clean)); } catch(e) {} buildNav(); renderStage(); renderProgress(); fitStage(); }
   function pingSave(){ var el = document.getElementById('saveState'); el.textContent='Saved'; el.style.opacity='1'; setTimeout(function(){ el.textContent='Auto‑saved'; el.style.opacity='.75'; }, 1200); }
 
   // ===== Navigation =====
@@ -328,7 +349,7 @@
     {type:'reviews', id:'reviews', icon:'📝', label:'Read: Online Reviews'},
     {type:'metrics', id:'metrics', icon:'📊', label:'Review: HR Metrics'},
     {type:'shannon', id:'shannonSummary', icon:'✅', label:'Report to Shannon'},
-    {type:'rank', id:'rankTop3', icon:'🎯', label:'Rank Top 3 Issues'}
+    {type:'rank', id:'rankTop3', icon:'🎯', label:'Rank Top 3 Themes'}
   ];
   function buildNav(){
     var nav = document.getElementById('nav');
@@ -404,8 +425,15 @@
   }
   function renderStage(){
     var stage = document.getElementById('stage');
-    stage.style.backgroundImage = 'url(' + CONFIG.assets.bg + ')';
     stage.innerHTML = '';
+    // Use a pinned <img> for background so coordinates map 1:1 to pixels
+    var bg = document.createElement('img');
+    bg.className = 'bg';
+    bg.src = CONFIG.assets.bg;
+    bg.alt = 'Restaurant background';
+    bg.addEventListener('error', function(){ console.warn('Background image failed to load:', CONFIG.assets.bg); });
+    stage.appendChild(bg);
+
     CONFIG.sprites.forEach(function(s){
       var img = document.createElement('img');
       img.className = 'sprite' + (s.kind!=='npc' ? ' badge' : '');
@@ -418,10 +446,9 @@
       img.src = src;
       if(s.id==='Carlos' || s.id==='Maya'){ img.style.setProperty('--baseScale','1.07'); }
       img.addEventListener('error', function onErr(){ img.removeEventListener('error', onErr); if(s.kind==='reviews'){ img.src = PLACEHOLDERS.phone; } else if(s.kind==='metrics'){ img.src = PLACEHOLDERS.folder; } else { img.src = PLACEHOLDERS.person; } });
-      img.addEventListener('click', function(){ routeTo(s.id); openOverlayFor(s.id, s.x, s.y); });
+      img.addEventListener('click', function(){ routeTo(s.id); openOverlayFor(s.id); });
       stage.appendChild(img);
 
-      // labels for non-NPC badges (phone/folder)
       if(s.kind!=='npc'){
         var label = document.createElement('div');
         label.className = 'sprite-label';
@@ -442,8 +469,14 @@
     o.id = 'overlay';
     o.className = 'overlay';
     o.style.setProperty('--overlay-scale', 1.75);
+    // Visible defaults
+    o.style.display = 'grid';
+    o.style.visibility = 'visible';
+    o.style.left = '40px';
+    o.style.top = '40px';
     var close = document.createElement('button'); close.className='close'; close.innerHTML='✕'; close.addEventListener('click', function(){ o.remove(); });
-    var left = document.createElement('div'); var img = document.createElement('img'); img.className='portrait'; img.id='overlayPortrait'; left.appendChild(img);
+    var left = document.createElement('div'); left.id='overlayLeft';
+    var img = document.createElement('img'); img.className='portrait'; img.id='overlayPortrait'; left.appendChild(img);
     var right = document.createElement('div'); right.className='content'; right.id='overlayContent';
     o.appendChild(close); o.appendChild(left); o.appendChild(right);
     stage.appendChild(o);
@@ -455,21 +488,29 @@
     var content = document.getElementById('overlayContent');
     content.innerHTML = '';
     portrait.className = 'portrait';
+    // default to two-column overlay; specific views can go full-width
+    o.classList.remove('full');
+    // make sure overlay is visible
+    o.style.display = 'grid';
+    o.style.visibility = 'visible';
+
     var isNPC = CONFIG.npcs.some(function(n){return n.id===id;});
-    if(isNPC){ portrait.classList.add('npc-bg'); portrait.src = (CONFIG.assets.portraits[id] || PLACEHOLDERS.person); }
+    if(isNPC){ portrait.classList.add('npc-bg','npc-face'); portrait.src = (CONFIG.assets.portraits[id] || PLACEHOLDERS.person); portrait.onerror = function(){ portrait.onerror=null; portrait.src = PLACEHOLDERS.person; }; }
     else if(id==='reviews'){ portrait.classList.add('plain'); portrait.src = (CONFIG.assets.icons.reviews || PLACEHOLDERS.phone); }
     else if(id==='metrics'){ portrait.classList.add('plain'); portrait.src = (CONFIG.assets.icons.metrics || PLACEHOLDERS.folder); }
+    else if(id==='shannonSummary'){ portrait.classList.add('npc-bg','npc-face'); portrait.src = (CONFIG.assets.portraits['Shannon'] || PLACEHOLDERS.person); portrait.onerror = function(){ portrait.onerror=null; portrait.src = PLACEHOLDERS.person; }; }
     else { portrait.removeAttribute('src'); }
 
     if(isNPC){ renderNPCInto(id, content); }
     else if(id==='reviews'){ renderReviewsInto(content); }
     else if(id==='metrics'){ renderMetricsInto(content); }
-    else if(id==='rankTop3' || id==='rank'){ renderRankerInto(content); }
+    else if(id==='rankTop3' || id==='rank'){ o.classList.add('full'); renderRankerInto(content); }
     else if(id==='shannonSummary'){ renderShannonSummaryInto(content); }
     else if(id==='openSaveLoad'){ renderSaveLoadInto(content); }
     else { content.appendChild(el('<div class="subtle">Choose a section.</div>')); }
 
     positionOverlay(o);
+    requestAnimationFrame(function(){ positionOverlay(o); });
   }
   function positionOverlay(o){
     var os = 1.75; // overlay scale
@@ -501,12 +542,15 @@
   // ===== Renderers =====
   function renderNPCInto(npcId, target){
     var npc = CONFIG.npcs.find(function(n){ return n.id===npcId; });
+    if(!npc){ target.appendChild(el('<div class="subtle">Character not found.</div>')); return; }
     var d = document.createElement('div'); d.className='dialogue';
-    d.appendChild(el('<div class="bubble from-npc"><strong><span class="avatar ' + npc.color + '">' + npc.id[0] + '</span> ' + npc.id + ' — ' + npc.role + '</strong><br>' + npc.intro + '</div>'));
-    var asked = state.asked[npcId] || [];
-    npc.qa.forEach(function(pair, idx){ if(asked.includes(idx)){ d.appendChild(el('<div class="bubble from-player"><em>You asked:</em> ' + pair.q + '</div>')); d.appendChild(el('<div class="bubble from-npc">' + pair.a + '</div>')); } });
-    var remaining = npc.qa.map(function(_,i){ return i; }).filter(function(i){ return !asked.includes(i); });
-    if(remaining.length){ var choiceWrap = el('<div class="choices"></div>'); remaining.forEach(function(i){ var btn = el('<button>' + npc.qa[i].q + '</button>'); btn.addEventListener('click',function(){ state.asked[npcId] = [ ...(state.asked[npcId]||[]), i ]; saveState(); openOverlayFor(npcId); }); choiceWrap.appendChild(btn); }); d.appendChild(choiceWrap); }
+    var headerHtml = `<div class="bubble from-npc"><strong><span class="avatar ${npc.color}">${npc.id[0]}</span> ${npc.id} — ${npc.role}</strong><br>${npc.intro}</div>`;
+    d.appendChild(el(headerHtml));
+    var askedRaw = state.asked[npcId] || [];
+    var asked = Array.isArray(askedRaw) ? askedRaw : Array.from(askedRaw);
+    npc.qa.forEach(function(pair, idx){ if(asked.indexOf(idx)!==-1){ d.appendChild(el('<div class="bubble from-player"><em>You asked:</em> ' + pair.q + '</div>')); d.appendChild(el('<div class="bubble from-npc">' + pair.a + '</div>')); } });
+    var remaining = npc.qa.map(function(_,i){ return i; }).filter(function(i){ return asked.indexOf(i)===-1; });
+    if(remaining.length){ var choiceWrap = el('<div class="choices"></div>'); remaining.forEach(function(i){ var btn = el('<button>' + npc.qa[i].q + '</button>'); btn.addEventListener('click',function(){ var cur = state.asked[npcId] || []; if(!Array.isArray(cur)) cur = Array.from(cur); state.asked[npcId] = cur.concat([i]); saveState(); openOverlayFor(npcId); }); choiceWrap.appendChild(btn); }); d.appendChild(choiceWrap); }
     else { d.appendChild(el('<div class="subtle">You have asked all available questions for ' + npc.id + '. ✅</div>')); }
     target.appendChild(d); renderProgress();
   }
@@ -537,7 +581,8 @@
   function renderShannonSummaryInto(target){
     var r = calcProgress();
     target.appendChild(el('<h2>Report Back to Shannon</h2>'));
-    target.appendChild(el('<p>' + (r.complete? 'You’ve completed data gathering. You may proceed to prioritize the top issues.' : 'You still have items to review before we prioritize issues.') + '</p>'));
+    var portraitNote = el('<div class="subtle">You can proceed once all data sources are reviewed.</div>');
+    target.appendChild(portraitNote);
     var list = [];
     CONFIG.npcs.forEach(function(n){ var asked=(state.asked[n.id]||[]).length; if(asked<n.qa.length) list.push('Ask all questions for ' + n.id + '.'); });
     if((state.reviewsRead.size||0)<CONFIG.reviews.length) list.push('Read and mark all online reviews.');
@@ -549,12 +594,12 @@
   }
   function renderRankerInto(target){
     var r = calcProgress();
-    target.appendChild(el('<h2>Prioritize the Top 3 Issues</h2>'));
-    target.appendChild(el('<p class="subtle">Drag items from the list into the three priority slots. Then submit to get Shannon’s feedback.</p>'));
+    target.appendChild(el('<h2>Prioritize the Top 3 Themes<\/h2>'));
+    target.appendChild(el('<p class="subtle">Drag themes from the list into the three priority slots. Then submit to get Shannon’s feedback.</p>'));
     if(!r.complete){ target.appendChild(el('<p class="subtle" style="color:var(--warn)">Heads up: You haven’t completed data gathering — you can practice here, but Shannon will not accept your assessment until all data are reviewed.</p>')); }
 
     var wrap = el('<div class="row cols-2"></div>');
-    var left = el('<div><h3>Issues</h3><div class="issues" id="issues"></div></div>');
+    var left = el('<div><h3>Themes</h3><div class=\"issues\" id=\"issues\"></div></div>');
     var right = el('<div><h3>Your Top 3</h3><div class="top3" id="top3"></div></div>');
 
     var top3El = right.querySelector('#top3');
@@ -565,7 +610,7 @@
     var maxBar = Math.max(1, ev.max);
     CONFIG.issues.forEach(function(issue){
       var c = ev.counts[issue.id]||0;
-      var it = el('<div class="item" draggable="true" data-id="' + issue.id + '" tabindex="0" aria-grabbed="false"><div style="display:flex;align-items:center;gap:8px;justify-content:space-between;width:100%"><div><strong>' + issue.title + '</strong><div class="hint">' + issue.hint + '</div></div><div class="pill" title="' + evidenceSummaryText(issue.id, ev).replace(/"/g,'&quot;') + '">Evidence: ' + c + '</div></div><div aria-hidden="true" style="height:6px;background:#0b1320;border-radius:999px;margin-top:6px;overflow:hidden"><div style="height:100%;width:' + Math.round((c/maxBar)*100) + '%;background:linear-gradient(90deg,var(--accent),#6cf)"></div></div></div>');
+      var it = el('<div class="item" draggable="true" data-id="' + issue.id + '" tabindex="0" aria-grabbed="false"><div style="display:flex;align-items:center;gap:8px;justify-content:space-between;width:100%"><div><strong>' + issue.title + '</strong></div><div class="pill" title="' + evidenceSummaryText(issue.id, ev).replace(/"/g,'&quot;') + '">Evidence: ' + c + '</div></div><div aria-hidden="true" style="height:6px;background:#0b1320;border-radius:999px;margin-top:6px;overflow:hidden"><div style="height:100%;width:' + Math.round((c/maxBar)*100) + '%;background:linear-gradient(90deg,var(--accent),#6cf)"></div></div></div>');
       addDragHandlers(it); issuesEl.appendChild(it);
     });
 
@@ -577,8 +622,9 @@
     actions.appendChild(submit); actions.appendChild(clear);
     target.appendChild(actions);
 
-    var feedback = el('<div id="feedback" class="subtle" style="margin-top:10px"></div>');
-    target.appendChild(feedback);
+    var feedback = el('<div id="feedback" class="subtle" style="margin-bottom:12px"></div>');
+    // Put feedback at the very top so results are immediately visible
+    target.insertBefore(feedback, target.firstChild);
 
     submit.addEventListener('click',function(){
       var picks = Array.from(top3El.querySelectorAll('.slot')).map(function(s){ return s.getAttribute('data-id'); }).filter(Boolean);
@@ -590,16 +636,42 @@
       var ev2 = computeEvidence();
       var evTop3 = topIssuesByEvidence(ev2,3);
       var titleById = function(id){ var f = CONFIG.issues.find(function(i){ return i.id===id; }); return f? f.title : id; };
-      var lines = [];
-      lines.push(correct ? 'Shannon: “I think your assessment is spot on!” ✅' : 'Shannon: “Hmmm, I don’t know that I agree with that being the top priority.” ❌');
-      lines.push('');
-      lines.push('Evidence check (based on what you collected):');
-      lines.push('Top signals → ' + evTop3.map(function(id){ return titleById(id) + ' (' + (ev2.counts[id]||0) + ')'; }).join(', '));
-      lines.push('Your picks → ' + picks.map(function(id){ return titleById(id) + ' (' + (ev2.counts[id]||0) + ')'; }).join(', '));
+      var fmt = function(id){ return titleById(id) + ' (' + ((ev2.counts[id]||0)) + ' datapoints)'; };
+
+      var fb = document.getElementById('feedback');
+      fb.innerHTML = '';
+      var dlg = el('<div class="dialogue"></div>');
+      var headHtml = '<div class="bubble from-npc"><strong><span class="avatar npc-Shannon">S</span> Shannon — Operating Partner</strong><br>' + (correct ? 'I think your assessment is spot on! ✅' : 'Hmmm, I don’t know that I agree with that being the top priority. ❌') + '</div>';
+      dlg.appendChild(el(headHtml));
+
+      var bodyHtml = '<div class="bubble from-npc">'
+        + '<div><em>Evidence check (based on what you collected):</em></div>'
+        + '<div style="margin-top:6px">Top signals → ' + evTop3.map(fmt).join(', ') + '</div>'
+        + '<div>Your picks → ' + picks.map(fmt).join(', ') + '</div>'
+        + '<div class="subtle" style="margin-top:6px">Numbers show how many datapoints of supporting evidence you gathered.</div>'
+        + '</div>';
+      dlg.appendChild(el(bodyHtml));
+
       var notChosenTop = evTop3.filter(function(id){ return picks.indexOf(id)===-1; });
-      if(notChosenTop.length){ lines.push('Consider prioritizing: ' + notChosenTop.map(titleById).join(', ')); notChosenTop.slice(0,2).forEach(function(id){ var s = ev2.sources[id]||[]; if(s.length){ lines.push('- ' + titleById(id) + ' evidence e.g., ' + s.slice(0,2).join(' | ')); } }); }
-      var msg = lines.join(String.fromCharCode(10));
-      showFeedback(msg, correct? 'good':'bad');
+      if(!correct && notChosenTop.length){
+        var suggHtml = '<div class="bubble from-npc">Consider prioritizing: ' + notChosenTop.map(fmt).join(', ') + '</div>';
+        dlg.appendChild(el(suggHtml));
+      }
+      // Build a header row with Shannon portrait (same dimensions as Report to Shannon)
+      var wrap = el('<div class="fb-head" style="display:grid;grid-template-columns:220px 1fr;gap:14px;align-items:start;"></div>');
+      var picBox = document.createElement('div');
+      var pic = document.createElement('img');
+      pic.className = 'portrait npc-bg npc-face';
+      pic.src = (CONFIG.assets.portraits['Shannon'] || PLACEHOLDERS.person);
+      pic.onerror = function(){ this.onerror=null; this.src = PLACEHOLDERS.person; };
+      picBox.appendChild(pic);
+      var rightBox = document.createElement('div');
+      rightBox.appendChild(dlg);
+      wrap.appendChild(picBox);
+      wrap.appendChild(rightBox);
+      fb.appendChild(wrap);
+      // Scroll overlay content to top so the feedback is immediately visible
+      var oc = document.getElementById('overlayContent'); if(oc){ oc.scrollTop = 0; }
     });
 
     clear.addEventListener('click',function(){ Array.from(top3El.querySelectorAll('.slot')).forEach(function(s){ clearSlot(s); }); saveState(); openOverlayFor('rankTop3'); });
@@ -628,12 +700,12 @@
     bar.appendChild(loadBtn); bar.appendChild(copyBtn); bar.appendChild(hardResetBtn); target.appendChild(bar);
     loadBtn.addEventListener('click',function(){ try{ var obj=JSON.parse(atob(input.value.trim())); obj.reviewsRead=new Set(obj.reviewsRead||[]); state=obj; saveState(); alert('Loaded!'); openOverlayFor(state.visited||'Shannon'); }catch(e){ alert('Invalid code.'); } });
     copyBtn.addEventListener('click',function(){ navigator.clipboard.writeText(code); alert('Copied!'); });
-    hardResetBtn.addEventListener('click',function(){ if(confirm('This will clear your saved progress on this device. Continue?')){ resetState({hard:true}); alert('Progress cleared. Starting fresh.'); } });
+    hardResetBtn.addEventListener('click',function(){ if(confirm('This will clear your saved progress on this device. Continue?')){ resetState(); alert('Progress cleared. Starting fresh.'); } });
   }
 
   // ===== Wire controls & boot =====
   document.getElementById('openSaveLoad').addEventListener('click', function(){ routeTo('openSaveLoad'); openOverlayFor('openSaveLoad'); });
-  document.getElementById('resetBtn').addEventListener('click', function(){ if(confirm('Reset all progress and clear device save?')) resetState({hard:true, reload:false}); });
+  document.getElementById('resetBtn').addEventListener('click', function(){ if(confirm('Reset all progress and clear device save?')) resetState(); });
   var ambTgl = document.getElementById('ambienceToggle'); if(ambTgl){ ambTgl.addEventListener('click', toggleAmbience); }
 
   buildNav(); renderStage(); renderProgress(); fitStage(); initAudio();
